@@ -81,7 +81,7 @@ def proccess_command(line: str):
 
 @special_command
 def show(user_slice: str | None = None):
-    """Show you programm line by line\n\tFor see slice use args 'start_line:end_line:step'"""
+    """Show you programm line by line\n\tUsage: @show [start_line:end_line:step]"""
 
     if not user_slice:
         slice_ = slice(0, __buffer_size, 1)
@@ -117,14 +117,14 @@ def show(user_slice: str | None = None):
 
 
 @special_command
-def length():
+def length(*args, **kwargs):
     """Show available buffer len"""
     print("Programm buffer length:", len(__user_programm_buffer))
 
 
 @special_command
 def save(filename: list | None = None):
-    """Save programm to file\n\tFile name will be requested"""
+    """Save programm to file\n\tUsage: @save [filename]"""
     if not filename:
         filename = input("filename for load ~ ")
 
@@ -158,7 +158,7 @@ def save(filename: list | None = None):
 
 @special_command
 def load(filename: list | None = None):
-    """Load programm from file\n\tFile name will be requested"""
+    """Load programm from file\n\tUsage: @load [filename]"""
     if not filename:
         filename = input("filename for load ~ ")
 
@@ -197,27 +197,27 @@ def load(filename: list | None = None):
 
 @special_command
 def clear(answ: str | None = None):
-    """Delete all lines of your programm"""
+    """Delete all lines of your programm\n\tUsage: @clear [answer(y/n)]"""
     if not answ:
         answ = input("Delete all programm? [y/(n)] ~ ")
 
     else:
         answ = answ[0]
 
-    if answ == "y":
+    if answ == "y" or answ == "yes":
         __user_programm_buffer.re_init()
         print("Programm deleted")
 
 
 @special_command
-def help():
+def help(*args, **kwargs):
     """Show help page"""
     for spec_com, help_msg in name_help_map.items():
-        print(__SPECIAL_PROMPT + spec_com + "\t" + help_msg)
+        print(__SPECIAL_PROMPT + spec_com + "\t" + help_msg, "\n")
 
 
 @special_command
-def quit():
+def quit(*args, **kwargs):
     """Exit from editor without save"""
     exit()
 
@@ -260,12 +260,10 @@ def parse_args(argv: Collection):
         match arg:
             case str() as obj if (all([symb.isdigit() for symb in obj])):
                 __buffer_size = int(obj)
-                print("Set new buffer size:", __buffer_size)
 
             case str() as obj:
                 try:
                     __mode = Mode(obj)
-                    print("Set binary mode")
 
                 except ValueError:
                     __mode = Mode.TEXT
@@ -273,12 +271,16 @@ def parse_args(argv: Collection):
 
 #TODO
 # special command for setting up number base( 10 or 16 or 8 or ... )
+# special command for change mode in runtime (txt or bin) with help msg
 
 if __name__ == "__main__":
     import sys
 
     if sys.argv[1:]:
         parse_args(sys.argv[1:])
+
+    print("Buffer size:", __buffer_size)
+    print("Mode:", __mode.value)
         #try:
             #__buffer_size = int(sys.argv[1])
         #except ValueError:
