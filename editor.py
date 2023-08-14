@@ -1,4 +1,3 @@
-from fixed_list import FixedLengthList
 from enum import Enum
 from typing import Collection
 from collections import UserList
@@ -183,7 +182,13 @@ def load(filename: list | None = None):
     else:
         mode = "rb"
 
-    file = open(filename, mode)
+    try:
+        file = open(filename, mode)
+
+    except FileNotFoundError:
+        print("Invalid filename")
+        return
+
     loaded_rows = 0
 
     if __mode == Mode.TEXT:
