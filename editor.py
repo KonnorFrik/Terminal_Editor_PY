@@ -1,6 +1,7 @@
 from fixed_list import FixedLengthList
 from enum import Enum
 from typing import Collection
+from collections import UserList
 
 class Mode(Enum):
     TEXT = "txt"
@@ -24,16 +25,20 @@ __mode = Mode.TEXT
 __number_base = 16
 
 
-class FixedBuffer(FixedLengthList):
-    def __init__(self, *a, **kw):
+#class FixedBuffer(FixedLengthList):
+class ProgrammBuffer(UserList):
+    def __init__(self, length: int, *a, **kw):
         super().__init__(*a, **kw)
+        self.length = length
         self.re_init()
 
     def re_init(self):
         self.data = [str() for _ in range(self.length)]
 
+    def __getitem__(self, i):
+        return self.data[i]
 
-__user_programm_buffer: FixedBuffer# = FixedBuffer(length=__buffer_size)
+__user_programm_buffer: Collection# = FixedBuffer(length=__buffer_size)
 
 
 def get_user_input() -> str:
@@ -83,6 +88,8 @@ def proccess_command(line: str):
 def show(user_slice: str | None = None):
     """Show you programm line by line\n\tUsage: @show [start_line:end_line:step]"""
 
+    slice_: slice
+
     if not user_slice:
         slice_ = slice(0, __buffer_size, 1)
 
@@ -90,30 +97,25 @@ def show(user_slice: str | None = None):
         user_slice = user_slice[0]
 
         if user_slice.startswith(":"):
-            user_slice = str(0) + user_slice
+            user_slice = str(1) + user_slice
 
         if user_slice.endswith(":"):
             user_slice += str(__buffer_size)
 
-        splitted = user_slice.split(":")
-        slice_ = slice(*[int(s) - 1 if i == 0 else int(s) for i, s in enumerate(splitted) if s.isdigit()])
-        #res = list()
-#
-        #try:
-            #for num in splitted:
-                #buf = int(num)
-                #buf = buf - 1 if buf == 1 else buf
-                #res.append(buf)
-#
-            #slice_ = slice(*res)
-#
-        #except (ValueError, TypeError):
-            #print("Invalid args. Use default")
-            #slice_ = slice(0, __buffer_size, 1)
+        if all([symb.isdigit() for symb in user_slice]):
+            slice_ = int(user_slice)
 
-    for index, val in enumerate(__user_programm_buffer[slice_]):
-        if val:
-            print(f"{index + 1 + slice_.start} \t{val}")
+        else:
+            splitted = user_slice.split(":")
+            slice_ = slice(*[int(s) - 1 if i == 0 else int(s) for i, s in enumerate(splitted) if s.isdigit()][:3])
+
+    if type(slice_) == int:
+        print(f"{slice_} \t{__user_programm_buffer[slice_ - 1]}")
+
+    else:
+        for index, val in enumerate(__user_programm_buffer[slice_]):
+            if val:
+                print(f"{index + 1 + slice_.start} \t{val}")
 
 
 @special_command
@@ -130,6 +132,10 @@ def save(filename: list | None = None):
 
     else:
         filename = filename[0]
+
+    if not filename:
+        print("No filename given")
+        return
 
     mode: str
 
@@ -164,6 +170,10 @@ def load(filename: list | None = None):
 
     else:
         filename = filename[0]
+
+    if not filename:
+        print("No filename given")
+        return
 
     mode: str
 
@@ -234,24 +244,6 @@ def proccess_special_command(line: str):
         print("Unknown command")
 
 
-def main():
-    global __user_programm_buffer
-    __user_programm_buffer = FixedBuffer(length=__buffer_size)
-
-    try:
-        while True:
-            line = get_user_input()
-            match line:
-                case str() as special_line if special_line.startswith(__SPECIAL_PROMPT):
-                    proccess_special_command(special_line)
-
-                case str() as command:
-                    proccess_command(command)
-
-    except KeyboardInterrupt:
-        print("\nBye")
-
-
 def parse_args(argv: Collection):
     global __buffer_size
     global __mode
@@ -268,6 +260,25 @@ def parse_args(argv: Collection):
                 except ValueError:
                     __mode = Mode.TEXT
                     continue
+
+
+def main():
+    global __user_programm_buffer
+    __user_programm_buffer = ProgrammBuffer(__buffer_size)#[str() for _ in range(__buffer_size)]#FixedBuffer(length=__buffer_size)
+
+    try:
+        while True:
+            line = get_user_input().strip()
+            match line:
+                case str() as special_line if special_line.startswith(__SPECIAL_PROMPT):
+                    proccess_special_command(special_line)
+
+                case str() as command:
+                    proccess_command(command)
+
+    except KeyboardInterrupt:
+        print("\nBye")
+
 
 #TODO
 # special command for setting up number base( 10 or 16 or 8 or ... )
