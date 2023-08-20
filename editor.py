@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import Collection
+from typing import Collection, Iterable
 from collections import UserList
 
 class Mode(Enum):
-    TEXT = "txt"
-    BIN = "bin"
+    TEXT = "text"
+    BIN = "binary"
 
 name_help_map = dict()
 name_func_map = dict()
@@ -84,7 +84,7 @@ def proccess_command(line: str):
 
 
 @special_command
-def show(user_slice: str | None = None):
+def show(user_slice: str | None = None, *args, **kwargs):
     """Show you programm line by line\n\tUsage: @show [start_line:end_line:step]"""
 
     slice_: slice
@@ -118,13 +118,13 @@ def show(user_slice: str | None = None):
 
 
 @special_command
-def length(*args, **kwargs):
-    """Show available buffer len"""
-    print("Programm buffer length:", len(__user_programm_buffer))
+def size(*args, **kwargs):
+    """Show available buffer size"""
+    print("Programm buffer size:", len(__user_programm_buffer))
 
 
 @special_command
-def save(filename: list | None = None):
+def save(filename: list | None = None, *args, **kwargs):
     """Save programm to file\n\tUsage: @save [filename]"""
     if not filename:
         filename = input("filename for load ~ ")
@@ -162,7 +162,7 @@ def save(filename: list | None = None):
 
 
 @special_command
-def load(filename: list | None = None):
+def load(filename: list | None = None, *args, **kwargs):
     """Load programm from file\n\tUsage: @load [filename]"""
     if not filename:
         filename = input("filename for load ~ ")
@@ -211,7 +211,7 @@ def load(filename: list | None = None):
 
 
 @special_command
-def clear(answ: str | None = None):
+def clear(answ: str | None = None, *args, **kwargs):
     """Delete all lines of your programm\n\tUsage: @clear [answer(y/n)]"""
     if not answ:
         answ = input("Delete all programm? [y/(n)] ~ ")
@@ -222,6 +222,25 @@ def clear(answ: str | None = None):
     if answ == "y" or answ == "yes":
         __user_programm_buffer.re_init()
         print("Programm deleted")
+
+
+@special_command
+def mode(new_mode: Iterable = None, *args, **kwargs):
+    """Switch mode of editor. Without argument show current mode\n\tUsage: @mode [binary|bin|b | text|txt|t]"""
+    global __mode
+
+    new_mode = new_mode[0] if new_mode else None
+
+    if new_mode == "bin" or new_mode == "binary" or new_mode == "b":
+        __mode = Mode.BIN
+        print("Mode switched to:", __mode.value)
+
+    elif new_mode == "txt" or new_mode == "text" or new_mode == "t":
+        __mode = Mode.TEXT
+        print("Mode switched to:", __mode.value)
+
+    elif new_mode is None:
+        print("Current mode:", __mode.value)
 
 
 @special_command
@@ -249,24 +268,6 @@ def proccess_special_command(line: str):
         print("Unknown command")
 
 
-def parse_args(argv: Collection):
-    global __buffer_size
-    global __mode
-
-    for arg in argv:
-        match arg:
-            case str() as obj if (all([symb.isdigit() for symb in obj])):
-                __buffer_size = int(obj)
-
-            case str() as obj:
-                try:
-                    __mode = Mode(obj)
-
-                except ValueError:
-                    __mode = Mode.TEXT
-                    continue
-
-
 def main():
     global __user_programm_buffer
     __user_programm_buffer = ProgrammBuffer(__buffer_size)#[str() for _ in range(__buffer_size)]#FixedBuffer(length=__buffer_size)
@@ -287,19 +288,25 @@ def main():
 
 #TODO
 # special command for setting up number base( 10 or 16 or 8 or ... )
-# special command for change mode in runtime (txt or bin) with help msg
+# add args for @size, if size specifited - change buffer size with possible loss, without arg - show current buffer size
 
 if __name__ == "__main__":
-    import sys
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--size", help="Buffer size in lines", type=int, default=1000)
+    parser.add_argument("-b", "--binary", help="Binary mode (read and write binary files, specifies the values in the buffer as hex)", action="store_true")
+    args = parser.parse_args()
 
-    if sys.argv[1:]:
-        parse_args(sys.argv[1:])
+    if args.binary:
+        __mode = Mode.BIN
 
-    print("Buffer size:", __buffer_size)
-    print("Mode:", __mode.value)
-        #try:
-            #__buffer_size = int(sys.argv[1])
-        #except ValueError:
-            #print("Invalid args. Use default")
+    else:
+        __mode = Mode.TEXT
+
+    __buffer_size = args.size
+
+    print("Buffer size:\t", __buffer_size)
+    print("Mode:\t\t", __mode.value)
+    #print("bin", args.binary)
 
     main()
