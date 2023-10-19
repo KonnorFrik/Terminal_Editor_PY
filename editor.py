@@ -24,7 +24,6 @@ __mode = Mode.TEXT
 __number_base = 16
 
 
-#class FixedBuffer(FixedLengthList):
 class ProgrammBuffer(UserList):
     def __init__(self, length: int, *a, **kw):
         super().__init__(*a, **kw)
@@ -37,7 +36,8 @@ class ProgrammBuffer(UserList):
     def __getitem__(self, i):
         return self.data[i]
 
-__user_programm_buffer: Collection# = FixedBuffer(length=__buffer_size)
+
+__user_programm_buffer: ProgrammBuffer
 
 
 def get_user_input() -> str:
@@ -86,8 +86,6 @@ def proccess_command(line: str):
 @special_command
 def show(user_slice: str | None = None, *args, **kwargs):
     """Show you programm line by line\n\tUsage: @show [start_line:end_line:step]"""
-
-    slice_: slice
 
     if not user_slice:
         slice_ = slice(0, __buffer_size, 1)
